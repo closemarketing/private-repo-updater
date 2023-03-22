@@ -1,0 +1,7 @@
+{
+	"name": "closemarketing/wp-private-updater",
+	"description": "Library to update plugins from GitHub repositories.",
+	"require": {
+			"php": ">=7.0"
+	}
+}
