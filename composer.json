@@ -3,5 +3,23 @@
 	"description": "Library to update plugins from GitHub repositories.",
 	"require": {
 			"php": ">=7.0"
+	},
+	"license": "(LGPL-2.1-only or GPL-3.0-or-later)",
+	"authors": [
+		{
+				"name": "David Perez",
+				"email": "david@close.marketing",
+				"homepage": "https://close.technology",
+				"role": "Developer"
+		},
+		{
+				"name": "Alejandro Brea",
+				"email": "alex@close.technology",
+				"homepage": "https://close.technology",
+				"role": "Developer"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/closemarketing/wp-private-updater/issues"
 	}
 }
