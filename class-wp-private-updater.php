@@ -1,14 +1,12 @@
 <?php
-
 /**
  * The plugin updater checker
  *
- * @link       https://fgrweb.es
  * @since      1.0.0
  *
- * @package    Ponte_WordCamp
+ * @package    WP_Private_Updater
  */
-class Ponte_WordCamp_Updater {
+class WP_Private_Updater {
 	/**
 	 * The plugin congiguration
 	 *
@@ -45,6 +43,14 @@ class Ponte_WordCamp_Updater {
 	 * @var boolean
 	 */
 	private $is_active;
+
+	/**
+	 * The GitHub URI
+	 *
+	 * @var string
+	 */
+	private $github_uri;
+
 	/**
 	 * The class construct
 	 *
@@ -57,6 +63,7 @@ class Ponte_WordCamp_Updater {
 		$this->file            = $file;
 		$this->is_active       = false;
 		$this->plugin_basename = plugin_basename( $this->file );
+		$this->github_uri      = 'https://api.github.com/repos/' . $this->plugin_config['github'] . '/releases';
 	}
 
 	/**
@@ -64,11 +71,11 @@ class Ponte_WordCamp_Updater {
 	 *
 	 * @return void
 	 */
-	public function fgr_check_update() {
-		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'fgr_check_transient' ), 10, 1 );
-		add_filter( 'http_request_args', array( $this, 'fgr_set_header_token' ), 10, 2 );
-		add_filter( 'plugins_api', array( $this, 'fgr_plugin_popup' ), 10, 3 );
-		add_filter( 'upgrader_post_install', array( $this, 'fgr_after_install' ), 10, 3 );
+	public function check_update() {
+		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_transient' ), 10, 1 );
+		add_filter( 'http_request_args', array( $this, 'set_header_token' ), 10, 2 );
+		add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
+		add_filter( 'upgrader_post_install', array( $this, 'after_install' ), 10, 3 );
 	}
 	/**
 	 * The check for updates transient function.
@@ -76,13 +83,13 @@ class Ponte_WordCamp_Updater {
 	 * @param  object $transient The transient object.
 	 * @return object            The transient object.
 	 */
-	public function fgr_check_transient( $transient ) {
+	public function check_transient( $transient ) {
 		// Check if transiente has checked property.
 		if ( ! property_exists( $transient, 'checked' ) ) {
 			return $transient;
 		}
-		$this->fgr_github_repository_info();
-		$this->fgr_get_plugin_data();
+		$this->github_repository_info();
+		$this->get_plugin_data();
 		// Did WordPress checked updates?
 		if ( $transient->checked[ $this->plugin_basename ] ) {
 			// Compare versions.
@@ -106,7 +113,7 @@ class Ponte_WordCamp_Updater {
 	 *
 	 * @return array
 	 */
-	public function fgr_github_repository_info() {
+	public function github_repository_info() {
 		if ( null !== $this->github_response ) {
 			return;
 		}
@@ -122,7 +129,7 @@ class Ponte_WordCamp_Updater {
 			'sslverify'   => false,
 		);
 		// Get the response.
-		$request = wp_remote_get( $this->plugin_config['github_uri'], $args );
+		$request = wp_remote_get( $this->github_uri, $args );
 		// Check for error.
 		if ( is_wp_error( $request ) ) {
 			return;
@@ -146,7 +153,7 @@ class Ponte_WordCamp_Updater {
 	 *
 	 * @return array
 	 */
-	public function fgr_get_plugin_data() {
+	public function get_plugin_data() {
 		if ( null !== $this->plugin_data ) {
 			return;
 		}
@@ -160,7 +167,7 @@ class Ponte_WordCamp_Updater {
 	 * @param  string $url The downloading url.
 	 * @return array
 	 */
-	public function fgr_set_header_token( $args, $url ) {
+	public function set_header_token( $args, $url ) {
 		$parse_url = wp_parse_url( $url );
 		if ( 'api.github.com' === $parse_url['host'] && isset( $parse_url['query'] ) ) {
 			parse_str( $parse_url['query'], $query );
@@ -180,12 +187,12 @@ class Ponte_WordCamp_Updater {
 	 * @param  string             $action The type of information being requested from the Plugin Installation API.
 	 * @param  object             $args   Plugin API arguments.
 	 */
-	public function fgr_plugin_popup( $result, $action, $args ) {
+	public function plugin_popup( $result, $action, $args ) {
 		if ( empty( $args->slug ) || 'plugin_information' !== $action || $args->slug !== current( explode( '/', $this->plugin_basename ) ) ) {
 			return false;
 		}
-		$this->fgr_github_repository_info();
-		$this->fgr_get_plugin_data();
+		$this->github_repository_info();
+		$this->get_plugin_data();
 		$plugin = array(
 			'name'              => $this->plugin_data['Name'],
 			'slug'              => $this->basename,
@@ -215,7 +222,7 @@ class Ponte_WordCamp_Updater {
 	 * @return array
 	 *
 x	 */
-	public function fgr_after_install( $response, $hook_extra, $result ) {
+	public function after_install( $response, $hook_extra, $result ) {
 		// Get FileSystem object.
 		global $wp_filesystem;
 		$install_directory = plugin_dir_path( $this->file );
